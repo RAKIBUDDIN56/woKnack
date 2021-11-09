@@ -6,17 +6,18 @@ import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:rflutter_alert/rflutter_alert.dart';
 import 'package:http_parser/http_parser.dart';
+import 'package:wo_skills/tabs/warni2.dart';
 import 'package:wo_skills/widgets/helperWidgets/output_dialog.dart';
 import 'package:wo_skills/widgets/helperWidgets/process_dialog.dart';
 
-class PostScreen extends StatefulWidget {
-  const PostScreen({Key key}) : super(key: key);
+class GenderD extends StatefulWidget {
+  const GenderD({Key key}) : super(key: key);
 
   @override
   _PostScreenState createState() => _PostScreenState();
 }
 
-class _PostScreenState extends State<PostScreen> {
+class _PostScreenState extends State<GenderD> {
   TextEditingController nameTextEditingController = TextEditingController();
   TextStyle textStyle = const TextStyle(
       color: Colors.black, fontSize: 20, fontWeight: FontWeight.bold);
@@ -303,96 +304,27 @@ class _PostScreenState extends State<PostScreen> {
         body: ListView(
           padding: EdgeInsets.only(left: 20, right: 20),
           children: [
-            const SizedBox(height: 55),
-            Text('Create a Post',
+            const SizedBox(height: 100),
+            Text('Upload NIC Photo',
                 textAlign: TextAlign.center, style: textStyle),
-            const SizedBox(height: 5),
+            const SizedBox(height: 75),
             Padding(
               padding: const EdgeInsets.all(0.0),
               child: Column(
                 children: [
-                  const SizedBox(
-                    height: 1.0,
-                  ),
-                  //post field
-                  _buildTextField(),
-                  const SizedBox(
-                    height: 1.0,
-                  ),
                   Row(
-                    children: [_createPicWidget(), _createVideoWidget()],
+                    children: [
+                      _createPicWidget(),
+                    ],
                   ),
                   _createImageWidget(),
 
                   //blood group
-                  const Padding(
-                    padding: EdgeInsets.only(
-                        left: 0, right: 250, bottom: 4, top: 20),
-                    child: Text('Select Category',
-                        style: TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.bold)),
-                  ),
-                  Padding(
-                    padding:
-                        const EdgeInsets.only(left: 10.0, right: 10, top: 5),
-                    child: InputDecorator(
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(5.0)),
-                        contentPadding: const EdgeInsets.only(
-                          top: 15,
-                          bottom: 15,
-                        ),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: ButtonTheme(
-                          alignedDropdown: true,
-                          child: DropdownButton<String>(
-                            hint: Text(categoryDropDownValue),
-                            style: const TextStyle(
-                                fontSize: 16, color: Colors.black45),
-                            focusColor: Colors.blue,
-                            isDense: true,
-                            isExpanded: true,
-                            items: categoryList.map((item) {
-                              return DropdownMenuItem<String>(
-                                child: Text(item),
-                                value: item,
-                              );
-                            }).toList(),
-                            onChanged: (value) {
-                              setState(() {
-                                categoryDropDownValue = value;
-                                debugPrint(categoryDropDownValue);
-                              });
-                            },
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
+
                   //contact number field
-                  const SizedBox(
-                    height: 20.0,
+                  SizedBox(
+                    height: 150,
                   ),
-                  const Padding(
-                    padding: EdgeInsets.all(10.0),
-                    child: TextField(
-                      decoration: InputDecoration(
-                        enabledBorder: OutlineInputBorder(
-                          borderSide:
-                              BorderSide(color: Colors.grey, width: 2.0),
-                        ),
-                        hintText: 'Page Name',
-                        //prefixIcon: Icon(Icons.mail_outline),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(
-                    height: 20.0,
-                  ),
-
                   Padding(
                     padding:
                         const EdgeInsets.only(left: 8.0, right: 8.0, top: 50),
@@ -403,7 +335,7 @@ class _PostScreenState extends State<PostScreen> {
                         height: 50.0,
                         child: Center(
                           child: Text(
-                            "POST",
+                            "Submit",
                             style: TextStyle(
                                 fontSize: 18.0, fontFamily: "Brand Bold"),
                           ),
@@ -426,47 +358,18 @@ class _PostScreenState extends State<PostScreen> {
   //submit button handler
   void _btnHndler() async {
     //  print('Clikced');
-    if (nameTextEditingController.text != '') {
-      print('Text clicked');
-      showDialog(
-          context: context,
-          builder: (_) => ProgressDialog(
-                message: 'Please wait....',
-              ));
-      var response = await predictCategory(nameTextEditingController.text);
-      Navigator.push(
-          context,
-          MaterialPageRoute(
-              builder: (_) => Warning(response ?? 'No Result', 'Category : ')));
-      nameTextEditingController.text == '';
-    } else if (imageFile != null) {
-      print('Image clicked');
-      showDialog(
-          context: context,
-          builder: (_) => ProgressDialog(
-                message: 'Please wait....',
-              ));
-      var response = await doUploadImage();
-      Navigator.push(
-          context,
-          MaterialPageRoute(
-              builder: (_) =>
-                  Warning(response ?? 'No Result', 'Text from Image : ')));
-      imageFile = null;
-    } else {
-      print('Video clicked');
-      showDialog(
-          context: context,
-          builder: (_) => ProgressDialog(
-                message: 'Please wait....',
-              ));
-      var response = await doUploadVideo();
-      Navigator.push(
-          context,
-          MaterialPageRoute(
-              builder: (_) =>
-                  Warning(response ?? 'No Result', 'Text from video : ')));
-    }
+
+    print('Video clicked');
+    showDialog(
+        context: context,
+        builder: (_) => ProgressDialog(
+              message: 'Please wait....',
+            ));
+    var response = await gender('hhh');
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (_) => Warn(response ?? 'No Result', 'Gender : ')));
 
     // doUpload();
 

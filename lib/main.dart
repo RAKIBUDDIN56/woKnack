@@ -1,8 +1,10 @@
 import 'package:wo_skills/pages/home_page.dart';
 import 'package:wo_skills/pages/home_screen.dart';
+import 'package:wo_skills/sutharshan/Screens/Register/Gender/components/body.dart';
 import 'package:wo_skills/sutharshan/Screens/Welcome/welcome_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_statusbarcolor/flutter_statusbarcolor.dart';
+import 'package:wo_skills/tabs/gender.dart';
 
 void main() {
   runApp(MyApp());
@@ -16,7 +18,7 @@ class MyApp extends StatelessWidget {
     return const MaterialApp(
       title: 'wo_skills',
       debugShowCheckedModeBanner: false,
-      home: MyHomePage(title: 'WoKnack'),
+      home: GenderD(),
     );
   }
 }
