@@ -36,51 +36,51 @@ class PostWidget extends StatelessWidget {
           SizedBox(height: 20.0),
           Text(post.content, style: TextStyle(fontSize: 15.0)),
           SizedBox(height: 10.0),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: <Widget>[
-              Row(
-                children: <Widget>[
-                  Icon(FontAwesomeIcons.thumbsUp,
-                      size: 15.0, color: Colors.blue),
-                  Text(' ${post.likes}'),
-                ],
-              ),
-              Row(
-                children: <Widget>[
-                  Text('${post.comments} comments   '),
-                ],
-              ),
-            ],
-          ),
-          Divider(height: 30.0),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: <Widget>[
-              Row(
-                children: <Widget>[
-                  Icon(FontAwesomeIcons.thumbsUp, size: 20.0),
-                  SizedBox(width: 5.0),
-                  Text('Like', style: TextStyle(fontSize: 14.0)),
-                ],
-              ),
-              Row(
-                children: <Widget>[
-                  Icon(FontAwesomeIcons.commentAlt, size: 20.0),
-                  SizedBox(width: 5.0),
-                  Text('Comment', style: TextStyle(fontSize: 14.0)),
-                ],
-              ),
-              // Row(
-              //   children: <Widget>[
-              //     Icon(FontAwesomeIcons.share, size: 20.0),
-              //     SizedBox(width: 5.0),
-              //     Text('Share', style: TextStyle(fontSize: 14.0)),
-              //   ],
-              // ),
-            ],
-          )
+          // Row(
+          //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          //   children: <Widget>[
+          //     Row(
+          //       children: <Widget>[
+          //         Icon(FontAwesomeIcons.thumbsUp,
+          //             size: 15.0, color: Colors.blue),
+          //         Text(' ${post.likes}'),
+          //       ],
+          //     ),
+          //     Row(
+          //       children: <Widget>[
+          //         Text('${post.comments} comments   '),
+          //       ],
+          //     ),
+          //   ],
+          // ),
+          // Divider(height: 30.0),
+          // Row(
+          //   mainAxisAlignment: MainAxisAlignment.spaceAround,
+          //   crossAxisAlignment: CrossAxisAlignment.center,
+          //   children: <Widget>[
+          //     Row(
+          //       children: <Widget>[
+          //         Icon(FontAwesomeIcons.thumbsUp, size: 20.0),
+          //         SizedBox(width: 5.0),
+          //         Text('Like', style: TextStyle(fontSize: 14.0)),
+          //       ],
+          //     ),
+          //     Row(
+          //       children: <Widget>[
+          //         Icon(FontAwesomeIcons.commentAlt, size: 20.0),
+          //         SizedBox(width: 5.0),
+          //         Text('Comment', style: TextStyle(fontSize: 14.0)),
+          //       ],
+          //     ),
+          //     // Row(
+          //     //   children: <Widget>[
+          //     //     Icon(FontAwesomeIcons.share, size: 20.0),
+          //     //     SizedBox(width: 5.0),
+          //     //     Text('Share', style: TextStyle(fontSize: 14.0)),
+          //     //   ],
+          //     // ),
+          //   ],
+          // )
         ],
       ),
     );

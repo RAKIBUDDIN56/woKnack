@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:wo_skills/pages/home_screen.dart';
 import 'package:wo_skills/widgets/post_screen.dart';
 
 class Warning extends StatelessWidget {
@@ -97,7 +98,7 @@ class Warning extends StatelessWidget {
                           Navigator.pushAndRemoveUntil(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => PostScreen(),
+                                builder: (context) => MyHomePage(),
                               ),
                               (route) => false);
                         },

@@ -114,9 +114,7 @@ class Warn extends StatelessWidget {
                           Navigator.pushAndRemoveUntil(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => MyHomePage(
-                                  title: 'WoKnack',
-                                ),
+                                builder: (context) => MyHomePage(),
                               ),
                               (route) => false);
                         },

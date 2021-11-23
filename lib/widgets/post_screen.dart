@@ -1,11 +1,14 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:wo_skills/helpers/constants.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:rflutter_alert/rflutter_alert.dart';
 import 'package:http_parser/http_parser.dart';
+import 'package:wo_skills/pages/home_screen.dart';
 import 'package:wo_skills/widgets/helperWidgets/output_dialog.dart';
 import 'package:wo_skills/widgets/helperWidgets/process_dialog.dart';
 
@@ -20,37 +23,15 @@ class _PostScreenState extends State<PostScreen> {
   TextEditingController nameTextEditingController = TextEditingController();
   TextStyle textStyle = const TextStyle(
       color: Colors.black, fontSize: 20, fontWeight: FontWeight.bold);
-
-  /// Detects if a file is being loaded drom file explorer
   bool isFileLoading = false;
   bool isFileLoadingVideo = false;
-
-  ///Detects if the profile image is being uploaded
   bool isUploadingFile = false;
   bool isUploadingFileVideo = false;
-
-  /// Profile image file
   final imagePicker = ImagePicker();
   File imageFile;
   File videoFile;
-
-  Widget _buildTextField() {
-    const maxLines = 10;
-
-    return Container(
-      margin: const EdgeInsets.all(12),
-      height: maxLines * 24.0,
-      child: TextField(
-        controller: nameTextEditingController,
-        maxLines: maxLines,
-        decoration: InputDecoration(
-          hintText: "Enter a text",
-          fillColor: Colors.grey[300],
-          filled: true,
-        ),
-      ),
-    );
-  }
+  static final FirebaseFirestore _store = FirebaseFirestore.instance;
+  static final FirebaseStorage _storage = FirebaseStorage.instance;
 
   ///Open file explorer
   void _openFileExplorer() async {
@@ -143,6 +124,31 @@ class _PostScreenState extends State<PostScreen> {
   }
 
   //METHOD TO PREDICT CATEGORY
+  Future<String> predictPage(List body) async {
+    var client = http.Client();
+    //for emulator
+    //url for imulator
+    //var uri = Uri.parse("http://10.0.2.2:5000/predict");
+    var uri = Uri.parse("http://192.168.8.101:5000/pagepredict");
+    Map<String, String> headers = {"Content-type": "application/json"};
+    var jsonString = json.encode(body);
+    try {
+      var resp = await client.post(uri, headers: headers, body: jsonString);
+      //var resp=await http.get(Uri.parse("http://192.168.1.101:5000"));
+      if (resp.statusCode == 200) {
+        debugPrint("DATA FETCHED SUCCESSFULLY");
+        var result = json.decode(resp.body);
+        debugPrint(result["prediction"]);
+        return result["prediction"];
+      }
+    } catch (e) {
+      debugPrint("EXCEPTION OCCURRED: $e");
+      return null;
+    }
+    return null;
+  }
+
+  //METHOD TO PREDICT CATEGORY
   Future<String> predictCategory(String body) async {
     var client = http.Client();
     //for emulator
@@ -170,10 +176,7 @@ class _PostScreenState extends State<PostScreen> {
   //METHOD TO PREDICT NEGATIVE POST
   Future<String> predictNegativePost(String body) async {
     var client = http.Client();
-    //for emulator
-    //url for imulator
-    //var uri = Uri.parse("http://10.0.2.2:5000/predict");
-    //http://192.168.8.101:5000/negativePostAnanlysis
+
     var uri = Uri.parse("http://192.168.8.101:5000/negativePostAnanlysis");
     Map<String, String> headers = {"Content-type": "application/json"};
     String jsonString = json.encode(body);
@@ -238,10 +241,7 @@ class _PostScreenState extends State<PostScreen> {
 //METHOD TO PREDICT NEGATIVE POST
   Future<String> gender(String body) async {
     var client = http.Client();
-    //for emulator
-    //url for imulator
-    //var uri = Uri.parse("http://10.0.2.2:5000/predict");
-    //http://192.168.8.101:5000/negativePostAnanlysis
+
     var uri = Uri.parse("http://192.168.8.101:5000/gender");
     Map<String, String> headers = {"Content-type": "application/json"};
     String jsonString = json.encode(body);
@@ -296,6 +296,10 @@ class _PostScreenState extends State<PostScreen> {
     );
   }
 
+  var setDefaultMake = true, setDefaultMakeModel = true;
+  var selecetedCategory;
+  var setDefaultMakePage = true, setDefaultMakeModelPage = true;
+  var selecetedPage, carMakeModel;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -335,58 +339,144 @@ class _PostScreenState extends State<PostScreen> {
                   Padding(
                     padding:
                         const EdgeInsets.only(left: 10.0, right: 10, top: 5),
-                    child: InputDecorator(
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(5.0)),
-                        contentPadding: const EdgeInsets.only(
-                          top: 15,
-                          bottom: 15,
-                        ),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: ButtonTheme(
-                          alignedDropdown: true,
-                          child: DropdownButton<String>(
-                            hint: Text(categoryDropDownValue),
-                            style: const TextStyle(
-                                fontSize: 16, color: Colors.black45),
-                            focusColor: Colors.blue,
-                            isDense: true,
-                            isExpanded: true,
-                            items: categoryList.map((item) {
-                              return DropdownMenuItem<String>(
-                                child: Text(item),
-                                value: item,
-                              );
-                            }).toList(),
-                            onChanged: (value) {
-                              setState(() {
-                                categoryDropDownValue = value;
-                                debugPrint(categoryDropDownValue);
-                              });
-                            },
+                    child: StreamBuilder<QuerySnapshot>(
+                      stream: FirebaseFirestore.instance
+                          .collection('woknack_users')
+                          .doc(FirebaseAuth.instance.currentUser.uid)
+                          .collection('pages')
+                          .snapshots(),
+                      builder: (BuildContext context,
+                          AsyncSnapshot<QuerySnapshot> snapshot) {
+                        // Safety check to ensure that snapshot contains data
+                        // without this safety check, StreamBuilder dirty state warnings will be thrown
+                        if (!snapshot.hasData) return Container();
+                        // Set this value for default,
+                        // setDefault will change if an item was selected
+                        // First item from the List will be displayed
+                        if (setDefaultMake) {
+                          selecetedCategory =
+                              snapshot.data.docs[0].get('page_category');
+                          debugPrint('setDefault make: $selecetedCategory');
+                        }
+                        return InputDecorator(
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(5.0)),
+                            contentPadding: const EdgeInsets.only(
+                              top: 15,
+                              bottom: 15,
+                            ),
                           ),
-                        ),
-                      ),
+                          child: DropdownButtonHideUnderline(
+                            child: ButtonTheme(
+                              alignedDropdown: true,
+                              child: DropdownButton(
+                                isExpanded: false,
+                                value: selecetedCategory,
+                                items: snapshot.data.docs.map((value) {
+                                  return DropdownMenuItem(
+                                    value: value.get('page_category'),
+                                    child:
+                                        Text('${value.get('page_category')}'),
+                                  );
+                                }).toList(),
+                                onChanged: (value) {
+                                  debugPrint('selected onchange: $value');
+                                  setState(
+                                    () {
+                                      debugPrint('make selected: $value');
+                                      // Selected value will be stored
+                                      selecetedCategory = value;
+                                      // Default dropdown value won't be displayed anymore
+                                      setDefaultMake = false;
+                                      // Set makeModel to true to display first car from list
+                                      setDefaultMakeModel = true;
+                                      print(selecetedCategory);
+                                    },
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.only(
+                        left: 0, right: 250, bottom: 4, top: 20),
+                    child: Text('Select Page',
+                        style: TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.bold)),
+                  ),
+                  Padding(
+                    padding:
+                        const EdgeInsets.only(left: 10.0, right: 10, top: 5),
+                    child: StreamBuilder<QuerySnapshot>(
+                      stream: FirebaseFirestore.instance
+                          .collection('woknack_users')
+                          .doc(FirebaseAuth.instance.currentUser.uid)
+                          .collection('pages')
+                          .snapshots(),
+                      builder: (BuildContext context,
+                          AsyncSnapshot<QuerySnapshot> snapshot) {
+                        // Safety check to ensure that snapshot contains data
+                        // without this safety check, StreamBuilder dirty state warnings will be thrown
+                        if (!snapshot.hasData) return Container();
+                        // Set this value for default,
+                        // setDefault will change if an item was selected
+                        // First item from the List will be displayed
+                        if (setDefaultMakePage) {
+                          selecetedPage =
+                              snapshot.data.docs[0].get('page_name');
+                          debugPrint('setDefault make: $selecetedPage');
+                        }
+                        return InputDecorator(
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(5.0)),
+                            contentPadding: const EdgeInsets.only(
+                              top: 15,
+                              bottom: 15,
+                            ),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: ButtonTheme(
+                              alignedDropdown: true,
+                              child: DropdownButton(
+                                isExpanded: false,
+                                value: selecetedPage,
+                                items: snapshot.data.docs.map((value) {
+                                  return DropdownMenuItem(
+                                    value: value.get('page_name'),
+                                    child: Text('${value.get('page_name')}'),
+                                  );
+                                }).toList(),
+                                onChanged: (value) {
+                                  debugPrint('selected onchange: $value');
+                                  setState(
+                                    () {
+                                      debugPrint('make selected: $value');
+                                      // Selected value will be stored
+                                      selecetedPage = value;
+                                      // Default dropdown value won't be displayed anymore
+                                      setDefaultMakePage = false;
+                                      // Set makeModel to true to display first car from list
+                                      setDefaultMakeModelPage = true;
+                                      print(selecetedPage);
+                                    },
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
                   //contact number field
                   const SizedBox(
                     height: 20.0,
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.all(10.0),
-                    child: TextField(
-                      decoration: InputDecoration(
-                        enabledBorder: OutlineInputBorder(
-                          borderSide:
-                              BorderSide(color: Colors.grey, width: 2.0),
-                        ),
-                        hintText: 'Page Name',
-                        //prefixIcon: Icon(Icons.mail_outline),
-                      ),
-                    ),
                   ),
 
                   const SizedBox(
@@ -422,23 +512,75 @@ class _PostScreenState extends State<PostScreen> {
         ));
   }
 
-  var res = '';
-  //submit button handler
+  Future<void> uploadInsuranceImage(String text) async {
+    var uid = FirebaseAuth.instance.currentUser.uid;
+    //var ext = path.extension(imageFile.path);
+    // await _storage.ref().child(uid).child(_pageName.text).putFile(imageFile);
+    var url =
+        await _storage.ref().child(uid).child(selecetedPage).getDownloadURL();
+
+    var doc = _store
+        .collection('woknack_users')
+        .doc(uid)
+        .collection('posts')
+        .doc(text.substring(0, 3));
+    var docPage = _store
+        .collection('woknack_users')
+        .doc(uid)
+        .collection('pages')
+        .doc(selecetedPage)
+        .collection('post')
+        .doc(text.substring(0, 3));
+
+    await doc.set({
+      'post': text,
+      'selected_page': selecetedPage,
+      'url': url
+
+      // 'page_description': _pageDescription.text,
+      // 'url': url,
+    }, SetOptions(merge: true));
+    await docPage.set({
+      'post': nameTextEditingController.text,
+      'selected_page': selecetedPage,
+      'url': url
+
+      // 'page_description': _pageDescription.text,
+      // 'url': url,
+    }, SetOptions(merge: true));
+  }
+
+  List list = ['Cooking', 'Dancing', 'Cooking', 'Cooking'];
+  var response = '';
   void _btnHndler() async {
-    //  print('Clikced');
-    if (nameTextEditingController.text != '') {
+    print('Clikced');
+    if (nameTextEditingController.text != '' && imageFile == null) {
       print('Text clicked');
       showDialog(
           context: context,
           builder: (_) => ProgressDialog(
                 message: 'Please wait....',
               ));
-      var response = await predictCategory(nameTextEditingController.text);
-      Navigator.push(
-          context,
-          MaterialPageRoute(
-              builder: (_) => Warning(response ?? 'No Result', 'Category : ')));
-      nameTextEditingController.text == '';
+      response = await predictCategory(nameTextEditingController.text);
+      // Navigator.push(
+      //     context,
+      //     MaterialPageRoute(
+      //         builder: (_) => Warning(response ?? 'No Result', 'Category : ')));
+
+      var res = await predictNegativePost(response);
+      print(res);
+      if (response == selecetedCategory && res == 'Positive') {
+        uploadInsuranceImage(nameTextEditingController.text);
+        Navigator.push(
+            context, MaterialPageRoute(builder: (_) => MyHomePage()));
+      } else {
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (_) =>
+                    Warning('ERROR', 'Select correct category to post ')));
+        nameTextEditingController.text = '';
+      }
     } else if (imageFile != null) {
       print('Image clicked');
       showDialog(
@@ -446,48 +588,50 @@ class _PostScreenState extends State<PostScreen> {
           builder: (_) => ProgressDialog(
                 message: 'Please wait....',
               ));
-      var response = await doUploadImage();
+      response = await doUploadImage();
+      var res = await predictCategory(response);
+
+      imageFile = null;
+      var ress = await predictNegativePost(response);
+      print(res);
       Navigator.push(
           context,
           MaterialPageRoute(
               builder: (_) =>
-                  Warning(response ?? 'No Result', 'Text from Image : ')));
-      imageFile = null;
-    } else {
+                  Warning(res ?? 'No Result', 'Text from Image : ')));
+      if (res == selecetedCategory && ress == 'Positive') {
+        uploadInsuranceImage(response);
+        Navigator.push(
+            context, MaterialPageRoute(builder: (_) => MyHomePage()));
+      } else {
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (_) =>
+                    Warning('ERROR', 'Select correct category to post ')));
+      }
+    } else if (videoFile != null) {
       print('Video clicked');
       showDialog(
           context: context,
           builder: (_) => ProgressDialog(
                 message: 'Please wait....',
               ));
-      var response = await doUploadVideo();
+      response = await doUploadVideo();
+      var ress = await predictCategory(response);
+
       Navigator.push(
           context,
           MaterialPageRoute(
               builder: (_) =>
-                  Warning(response ?? 'No Result', 'Text from video : ')));
-    }
+                  Warning(response ?? 'No Result', ' Text from video : ')));
 
-    // doUpload();
+      //var response = await predictPage(list);
+      print(response);
+      print('done');
+    } else {}
 
-    // _onBasicAlertPressed(context, resp);
-    //var response = await doUploadVideo();
-    print('Category isssss');
-    // Navigator.push(
-    //     context,
-    //     MaterialPageRoute(
-    //         builder: (_) => Warning(response ?? 'No Result', 'Category : ')));
-    // Navigator.push(
-    //     context,
-    //     MaterialPageRoute(
-    //         builder: (_) => Warning(response ?? 'No Result', 'Text : ')));
-
-    // res = await predictNegativePost('Love good');
-    // print(resp);
-
-    // _onBasicAlertPressed(context, response, 'Category :');
-
-    // }
+    //_onBasicAlertPressed(context, resp);
   }
 
   //function from rflutter pkg to display alert
@@ -558,12 +702,22 @@ class _PostScreenState extends State<PostScreen> {
       ),
     );
   }
-  // Widget _verticalDivider() {
-  //   return VerticalDivider(
-  //     color: Colors.red,
-  //     thickness: 2,
-  //     indent: 4,
-  //     endIndent: 4,
-  //   );
-  // }
+
+  Widget _buildTextField() {
+    const maxLines = 10;
+
+    return Container(
+      margin: const EdgeInsets.all(12),
+      height: maxLines * 24.0,
+      child: TextField(
+        controller: nameTextEditingController,
+        maxLines: maxLines,
+        decoration: InputDecoration(
+          hintText: "Enter a text",
+          fillColor: Colors.grey[300],
+          filled: true,
+        ),
+      ),
+    );
+  }
 }

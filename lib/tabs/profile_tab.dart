@@ -1,12 +1,20 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:wo_skills/widgets/create_page.dart';
 import 'package:wo_skills/widgets/separator_widget.dart';
 import 'package:flutter/material.dart';
 
 class ProfileTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-        child: Column(
-      children: <Widget>[
+    final Stream<QuerySnapshot> _driverStream = FirebaseFirestore.instance
+        .collection('woknack_users')
+        .doc(FirebaseAuth.instance.currentUser.uid)
+        .collection('pages')
+        .snapshots();
+    return ListView(
+      shrinkWrap: true,
+      children: [
         Container(
           height: 360.0,
           child: Stack(
@@ -131,8 +139,62 @@ class ProfileTab extends StatelessWidget {
                   ),
                   // Text('Find Friends',
                   //     style: TextStyle(fontSize: 16.0, color: Colors.blue)),
-                  OutlinedButton(onPressed: () {}, child: Text('Create a Page'))
+                  OutlinedButton(
+                      onPressed: () {
+                        Navigator.push(context,
+                            MaterialPageRoute(builder: (_) => CreatePage()));
+                      },
+                      child: Text('Create a Page'))
                 ],
+              ),
+              Padding(
+                padding: EdgeInsets.only(left: 10, right: 10, top: 5),
+                child: StreamBuilder<QuerySnapshot>(
+                    stream: _driverStream,
+                    builder: (BuildContext context,
+                        AsyncSnapshot<QuerySnapshot> snapshot) {
+                      if (snapshot.hasError) {
+                        return Text('Something is wrong');
+                      }
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return Text('Loading');
+                      }
+                      return ListView(
+                        shrinkWrap: true,
+                        // scrollDirection: Axis.horizontal,
+                        children: snapshot.data.docs
+                            .map((DocumentSnapshot documentSnapshot) {
+                          Map<String, dynamic> data =
+                              documentSnapshot.data() as Map<String, dynamic>;
+
+                          // return ListTile(
+                          //   title:
+                          //       Text(data['online'] == true ? data['name'] : 'No'),
+                          //   subtitle: Text(data['phone']),
+                          // );
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Container(
+                                height:
+                                    MediaQuery.of(context).size.width / 3 - 20,
+                                width:
+                                    MediaQuery.of(context).size.width / 3 - 20,
+                                decoration: BoxDecoration(
+                                    image: DecorationImage(
+                                        image: NetworkImage(data['url'])),
+                                    borderRadius: BorderRadius.circular(10.0)),
+                              ),
+                              SizedBox(height: 5.0),
+                              Text(data['page_name'],
+                                  style: TextStyle(
+                                      fontSize: 16.0,
+                                      fontWeight: FontWeight.bold))
+                            ],
+                          );
+                        }).toList(),
+                      );
+                    }),
               ),
               Padding(
                 padding: const EdgeInsets.only(top: 15.0),
@@ -273,6 +335,6 @@ class ProfileTab extends StatelessWidget {
         ),
         SeparatorWidget()
       ],
-    ));
+    );
   }
 }

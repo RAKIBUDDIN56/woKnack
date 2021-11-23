@@ -8,10 +8,7 @@ import 'package:wo_skills/tabs/profile_tab.dart';
 import 'package:wo_skills/tabs/watch_tab.dart';
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key key, this.title}) : super(key: key);
-
-  final String title;
-
+  static const idScreen = 'home';
   @override
   _MyHomePageState createState() => _MyHomePageState();
 }
@@ -41,7 +38,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.cyan,
-        title: Text(widget.title),
+        title: Text('WoKnack'),
         centerTitle: true,
       ),
       bottomNavigationBar: MotionTabBar(
@@ -70,7 +67,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             color: Colors.red,
             padding: const EdgeInsets.all(2),
             child: const Text(
-              '48',
+              '1',
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.white,
